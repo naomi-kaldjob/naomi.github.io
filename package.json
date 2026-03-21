@@ -1,5 +1,5 @@
 {
-  "homepage": "https://ton-username.github.io/qcm-app",
+  "homepage": "https://naomi.github.io/qcm-app",
   "scripts": {
     "deploy": "gh-pages -d dist"
   }
