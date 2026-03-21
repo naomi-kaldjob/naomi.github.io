@@ -1,0 +1,6 @@
+{
+  "homepage": "https://ton-username.github.io/qcm-app",
+  "scripts": {
+    "deploy": "gh-pages -d dist"
+  }
+}
