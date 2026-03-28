@@ -11,8 +11,9 @@
 
 <script>
 async function loadQuiz() {
-  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
-  const data = await res.json();
+  const res = await fetch("TON_WEBHOOK_URL");
+  const raw = await res.json();
+  const data = raw[0]; // ✅ correction ici
 
   const quizDiv = document.getElementById("quiz");
 
@@ -23,7 +24,7 @@ async function loadQuiz() {
     q.options.forEach((opt, oi) => {
       qDiv.innerHTML += `
         <label>
-          <input type="checkbox" name="q${qi}" value="${oi}">
+          <input type="radio" name="q${qi}" value="${oi}">
           ${opt}
         </label><br>
       `;
@@ -39,10 +40,9 @@ function submitQuiz() {
   let score = 0;
 
   window.quizData.questions.forEach((q, qi) => {
-    const checked = [...document.querySelectorAll(`input[name=q${qi}]:checked`)]
-      .map(el => parseInt(el.value));
+    const checked = document.querySelector(`input[name=q${qi}]:checked`);
 
-    if (JSON.stringify(checked.sort()) === JSON.stringify(q.correct.sort())) {
+    if (checked && parseInt(checked.value) === q.correctOptionIndex) {
       score++;
     }
   });
