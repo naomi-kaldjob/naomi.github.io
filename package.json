@@ -1,6 +1,0 @@
-{
-  "homepage": "https://naomi.github.io/qcm-app",
-  "scripts": {
-    "deploy": "gh-pages -d dist"
-  }
-}
