@@ -7,13 +7,14 @@
 
 <h1>Mon Quiz</h1>
 <div id="quiz"></div>
-<button onclick="submitQuiz()">Validers</button>
+<button onclick="submitQuiz()">Valideres</button>
 
 <script>
 async function loadQuiz() {
   const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const raw = await res.json();
   const data = raw[0]; // ✅ correction ici
+  console.log(raw);
 
   const quizDiv = document.getElementById("quiz");
 
