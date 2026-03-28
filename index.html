@@ -86,7 +86,21 @@ async function loadQuiz() {
 
   data.questions.forEach((q, qi) => {
     const qDiv = document.createElement("div");
-    qDiv.innerHTML = `<h3>${q.text}</h3>`;
+    qDiv.innerHTML = `
+  <div style="
+    display:inline-block;
+    background:#667eea;
+    color:white;
+    padding:5px 12px;
+    border-radius:20px;
+    font-size:12px;
+    margin-bottom:10px;
+  ">
+    📚 ${q.theme || "Général"}
+  </div>
+
+  <h3>${q.text}</h3>
+`;
 
     q.options.forEach((opt, oi) => {
       qDiv.innerHTML += `
