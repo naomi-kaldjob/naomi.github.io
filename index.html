@@ -76,31 +76,16 @@
 </div>
 
 <script>
-
 async function loadQuiz() {
   const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const raw = await res.json();
-  const data = raw[0];
+  const data = raw[0]; // ✅ correction ici
 
   const quizDiv = document.getElementById("quiz");
 
   data.questions.forEach((q, qi) => {
     const qDiv = document.createElement("div");
-    qDiv.innerHTML = `
-  <div style="
-    display:inline-block;
-    background:#667eea;
-    color:white;
-    padding:5px 12px;
-    border-radius:20px;
-    font-size:12px;
-    margin-bottom:10px;
-  ">
-    📚 ${q.theme || "Général"}
-  </div>
-
-  <h3>${q.text}</h3>
-`;
+    qDiv.innerHTML = `<h3>${q.text}</h3>`;
 
     q.options.forEach((opt, oi) => {
       qDiv.innerHTML += `
@@ -117,14 +102,6 @@ async function loadQuiz() {
   window.quizData = data;
 }
 
-/* 🚀 START BUTTON */
-function startQuiz() {
-  document.getElementById("modal").style.display = "none";
-  document.getElementById("quizContainer").style.display = "block";
-
-  loadQuiz();
-}
-
 function submitQuiz() {
   let score = 0;
 
@@ -139,7 +116,7 @@ function submitQuiz() {
   alert("Score : " + score + "/" + window.quizData.questions.length);
 }
 
+loadQuiz();
 </script>
-
 </body>
 </html>
