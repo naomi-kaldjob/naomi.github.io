@@ -11,7 +11,7 @@
 
 <script>
 async function loadQuiz() {
-  const res = await fetch("TON_WEBHOOK_URL");
+  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const raw = await res.json();
   const data = raw[0]; // ✅ correction ici
 
