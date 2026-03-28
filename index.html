@@ -1,105 +1,29 @@
-<!DOCTYPE html>
-<html>
-<head>
-  <title>QCM</title>
-
-  <style>
-    body {
-      font-family: Arial;
-    }
-
-    /* 🔥 MODAL */
-    #modal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.7);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #modalContent {
-      background: white;
-      padding: 30px;
-      border-radius: 15px;
-      max-width: 500px;
-      text-align: center;
-    }
-
-    #startBtn {
-      padding: 12px 20px;
-      border: none;
-      background: #667eea;
-      color: white;
-      border-radius: 10px;
-      cursor: pointer;
-      margin-top: 15px;
-    }
-
-    #quizContainer {
-      display: none;
-    }
-  </style>
-
-</head>
-<body>
-
-
-
-<!-- 🔥 QUIZ -->
-<div id="quizContainer">
-
-  <h1>Mon Quiz</h1>
-  <div id="quiz"></div>
-  <button onclick="submitQuiz()">Valider</button>
-
-</div>
-
-<script>
-async function loadQuiz() {
-  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
-  const raw = await res.json();
-  const data = raw[0]; // ✅ correction ici
-
-  const quizDiv = document.getElementById("quiz");
-
-  data.questions.forEach((q, qi) => {
-    const qDiv = document.createElement("div");
-    qDiv.innerHTML = `<h3>${q.text}</h3>`;
-
-    q.options.forEach((opt, oi) => {
-      qDiv.innerHTML += `
-        <label>
-          <input type="radio" name="q${qi}" value="${oi}">
-          ${opt}
-        </label><br>
-      `;
-    });
-
-    quizDiv.appendChild(qDiv);
-  });
-
-  window.quizData = data;
-}
-
-function submitQuiz() {
-  let score = 0;
-
-  window.quizData.questions.forEach((q, qi) => {
-    const checked = document.querySelector(`input[name=q${qi}]:checked`);
-
-    if (checked && parseInt(checked.value) === q.correctOptionIndex) {
-      score++;
-    }
-  });
-
-  alert("Score : " + score + "/" + window.quizData.questions.length);
-}
-
-loadQuiz();
-</script>
-</body>
+<!DOCTYPE html> 
+<html> 
+  <head> 
+    <title>QCM</title> 
+  </head> 
+  <body> 
+    <h1>Mon Quiz</h1> 
+    <div id="quiz"></div> 
+    <button onclick="submitQuiz()">Validers</button> 
+    <script> async function loadQuiz() 
+{ const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service"); 
+ const raw = await res.json(); const data = raw[0]; // ✅ correction ici 
+ const quizDiv = document.getElementById("quiz"); 
+ data.questions.forEach((q, qi) => 
+   { const qDiv = document.createElement("div"); 
+    qDiv.innerHTML = <h3>${q.text}</h3>; 
+                        q.options.forEach((opt, oi) => { qDiv.innerHTML += <label> 
+                          <input type="radio" name="q${qi}" value="${oi}"> ${opt} </label><br> ; });
+                                          quizDiv.appendChild(qDiv); }); 
+ window.quizData = data; } 
+      function submitQuiz() { 
+        let score = 0;
+        window.quizData.questions.forEach((q, qi) => { 
+          const checked = document.querySelector(input[name=q${qi}]:checked);
+          if (checked && parseInt(checked.value) === q.correctOptionIndex) { score++; } }); 
+        alert("Score : " + score + "/" + window.quizData.questions.length); } loadQuiz(); 
+    </script> 
+  </body> 
 </html>
