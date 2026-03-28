@@ -1,161 +1,130 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Quiz App</title>
+  <title>QCM</title>
 
   <style>
     body {
       font-family: Arial;
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: white;
-      text-align: center;
-      padding: 20px;
     }
 
-    #app {
-      max-width: 600px;
-      margin: auto;
-      background: white;
-      color: black;
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-    }
-
-    button {
-      display: block;
+    /* 🔥 MODAL */
+    #modal {
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
-      padding: 12px;
-      margin: 10px 0;
+      height: 100%;
+      background: rgba(0,0,0,0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #modalContent {
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    #startBtn {
+      padding: 12px 20px;
       border: none;
-      border-radius: 10px;
       background: #667eea;
       color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-
-    button:hover {
-      transform: scale(1.05);
-    }
-
-    .correct { background: #2ecc71 !important; }
-    .wrong { background: #e74c3c !important; }
-
-    #progressBar {
-      height: 10px;
-      background: #ddd;
       border-radius: 10px;
-      overflow: hidden;
-      margin-bottom: 20px;
+      cursor: pointer;
+      margin-top: 15px;
     }
 
-    #progress {
-      height: 100%;
-      width: 0%;
-      background: #667eea;
-      transition: 0.3s;
-    }
-
-    #score {
-      font-weight: bold;
-      margin-bottom: 10px;
+    #quizContainer {
+      display: none;
     }
   </style>
 
 </head>
 <body>
 
-<h1>🎯 Quiz</h1>
+<!-- 🔥 WELCOME POPUP -->
+<div id="modal">
+  <div id="modalContent">
+    <h2>👋 Bienvenue !</h2>
 
-<div id="app">
-  <div id="score">Score : 0</div>
+    <p>
+      Ce quiz a pour objectif de tester vos connaissances sur le thème du service civique et des institutions.
+    </p>
 
-  <div id="progressBar">
-    <div id="progress"></div>
+    <p>
+      👉 Répondez aux questions à choix unique  
+      👉 Cliquez sur “Valider” à la fin  
+      👉 Votre score sera affiché automatiquement
+    </p>
+
+    <button id="startBtn" onclick="startQuiz()">Commencer le quiz</button>
   </div>
+</div>
 
-  <h2 id="question"></h2>
-  <div id="answers"></div>
+<!-- 🔥 QUIZ -->
+<div id="quizContainer">
+
+  <h1>Mon Quiz</h1>
+  <div id="quiz"></div>
+  <button onclick="submitQuiz()">Valider</button>
+
 </div>
 
 <script>
-let quiz = [];
-let current = 0;
-let score = 0;
 
 async function loadQuiz() {
   const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const raw = await res.json();
-  quiz = raw[0].questions;
+  const data = raw[0];
 
-  showQuestion();
-}
+  const quizDiv = document.getElementById("quiz");
 
-function showQuestion() {
-  const q = quiz[current];
+  data.questions.forEach((q, qi) => {
+    const qDiv = document.createElement("div");
+    qDiv.innerHTML = `<h3>${q.text}</h3>`;
 
-  document.getElementById("question").innerText = q.text;
+    q.options.forEach((opt, oi) => {
+      qDiv.innerHTML += `
+        <label>
+          <input type="radio" name="q${qi}" value="${oi}">
+          ${opt}
+        </label><br>
+      `;
+    });
 
-  const answersDiv = document.getElementById("answers");
-  answersDiv.innerHTML = "";
-
-  q.options.forEach((opt, i) => {
-    const btn = document.createElement("button");
-    btn.innerText = opt;
-
-    btn.onclick = () => selectAnswer(btn, i);
-
-    answersDiv.appendChild(btn);
+    quizDiv.appendChild(qDiv);
   });
 
-  updateProgress();
+  window.quizData = data;
 }
 
-function selectAnswer(btn, index) {
-  const q = quiz[current];
-  const buttons = document.querySelectorAll("#answers button");
+/* 🚀 START BUTTON */
+function startQuiz() {
+  document.getElementById("modal").style.display = "none";
+  document.getElementById("quizContainer").style.display = "block";
 
-  buttons.forEach(b => b.disabled = true);
+  loadQuiz();
+}
 
-  if (index === q.correctOptionIndex) {
-    btn.classList.add("correct");
-    score++;
-  } else {
-    btn.classList.add("wrong");
+function submitQuiz() {
+  let score = 0;
 
-    // afficher bonne réponse
-    buttons[q.correctOptionIndex].classList.add("correct");
-  }
+  window.quizData.questions.forEach((q, qi) => {
+    const checked = document.querySelector(`input[name=q${qi}]:checked`);
 
-  document.getElementById("score").innerText = "Score : " + score;
-
-  setTimeout(() => {
-    current++;
-
-    if (current < quiz.length) {
-      showQuestion();
-    } else {
-      showFinal();
+    if (checked && parseInt(checked.value) === q.correctOptionIndex) {
+      score++;
     }
-  }, 1200);
+  });
+
+  alert("Score : " + score + "/" + window.quizData.questions.length);
 }
 
-function updateProgress() {
-  const percent = ((current) / quiz.length) * 100;
-  document.getElementById("progress").style.width = percent + "%";
-}
-
-function showFinal() {
-  document.getElementById("app").innerHTML = `
-    <h2>🎉 Quiz terminé</h2>
-    <h3>Score : ${score} / ${quiz.length}</h3>
-    <button onclick="location.reload()">Rejouer</button>
-  `;
-}
-
-loadQuiz();
 </script>
 
 </body>
