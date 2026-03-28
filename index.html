@@ -1,54 +1,158 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>QCM</title>
+  <title>Quiz App</title>
+
+  <style>
+    body {
+      font-family: Arial;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      color: white;
+      text-align: center;
+      padding: 20px;
+    }
+
+    #app {
+      max-width: 600px;
+      margin: auto;
+      background: white;
+      color: black;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+
+    button {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      margin: 10px 0;
+      border: none;
+      border-radius: 10px;
+      background: #667eea;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover {
+      transform: scale(1.05);
+    }
+
+    .correct { background: #2ecc71 !important; }
+    .wrong { background: #e74c3c !important; }
+
+    #progressBar {
+      height: 10px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    #progress {
+      height: 100%;
+      width: 0%;
+      background: #667eea;
+      transition: 0.3s;
+    }
+
+    #score {
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+  </style>
+
 </head>
 <body>
 
-<h1>Mon Quiz</h1>
-<div id="quiz"></div>
-<button onclick="submitQuiz()">Valideres</button>
+<h1>🎯 Quiz</h1>
+
+<div id="app">
+  <div id="score">Score : 0</div>
+
+  <div id="progressBar">
+    <div id="progress"></div>
+  </div>
+
+  <h2 id="question"></h2>
+  <div id="answers"></div>
+</div>
 
 <script>
+let quiz = [];
+let current = 0;
+let score = 0;
+
 async function loadQuiz() {
   const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const raw = await res.json();
-  const data = raw[0]; // ✅ correction ici
-  console.log(raw);
+  quiz = raw[0].questions;
 
-  const quizDiv = document.getElementById("quiz");
-
-  data.questions.forEach((q, qi) => {
-    const qDiv = document.createElement("div");
-    qDiv.innerHTML = `<h3>${q.text}</h3>`;
-
-    q.options.forEach((opt, oi) => {
-      qDiv.innerHTML += `
-        <label>
-          <input type="radio" name="q${qi}" value="${oi}">
-          ${opt}
-        </label><br>
-      `;
-    });
-
-    quizDiv.appendChild(qDiv);
-  });
-
-  window.quizData = data;
+  showQuestion();
 }
 
-function submitQuiz() {
-  let score = 0;
+function showQuestion() {
+  const q = quiz[current];
 
-  window.quizData.questions.forEach((q, qi) => {
-    const checked = document.querySelector(`input[name=q${qi}]:checked`);
+  document.getElementById("question").innerText = q.text;
 
-    if (checked && parseInt(checked.value) === q.correctOptionIndex) {
-      score++;
-    }
+  const answersDiv = document.getElementById("answers");
+  answersDiv.innerHTML = "";
+
+  q.options.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.innerText = opt;
+
+    btn.onclick = () => selectAnswer(btn, i);
+
+    answersDiv.appendChild(btn);
   });
 
-  alert("Score : " + score + "/" + window.quizData.questions.length);
+  updateProgress();
+}
+
+function selectAnswer(btn, index) {
+  const q = quiz[current];
+  const buttons = document.querySelectorAll("#answers button");
+
+  buttons.forEach(b => b.disabled = true);
+
+  if (index === q.correctOptionIndex) {
+    btn.classList.add("correct");
+    score++;
+  } else {
+    btn.classList.add("wrong");
+
+    // afficher bonne réponse
+    buttons[q.correctOptionIndex].classList.add("correct");
+  }
+
+  document.getElementById("score").innerText = "Score : " + score;
+
+  setTimeout(() => {
+    current++;
+
+    if (current < quiz.length) {
+      showQuestion();
+    } else {
+      showFinal();
+    }
+  }, 1200);
+}
+
+function updateProgress() {
+  const percent = ((current) / quiz.length) * 100;
+  document.getElementById("progress").style.width = percent + "%";
+}
+
+function showFinal() {
+  document.getElementById("app").innerHTML = `
+    <h2>🎉 Quiz terminé</h2>
+    <h3>Score : ${score} / ${quiz.length}</h3>
+    <button onclick="location.reload()">Rejouer</button>
+  `;
 }
 
 loadQuiz();
