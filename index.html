@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>QCM</title>
+</head>
+<body>
+
+<h1>Mon Quiz</h1>
+<div id="quiz"></div>
+<button onclick="submitQuiz()">Valider</button>
+
+<script>
+async function loadQuiz() {
+  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook-test/qcm-service");
+  const data = await res.json();
+
+  const quizDiv = document.getElementById("quiz");
+
+  data.questions.forEach((q, qi) => {
+    const qDiv = document.createElement("div");
+    qDiv.innerHTML = `<h3>${q.text}</h3>`;
+
+    q.options.forEach((opt, oi) => {
+      qDiv.innerHTML += `
+        <label>
+          <input type="checkbox" name="q${qi}" value="${oi}">
+          ${opt}
+        </label><br>
+      `;
+    });
+
+    quizDiv.appendChild(qDiv);
+  });
+
+  window.quizData = data;
+}
+
+function submitQuiz() {
+  let score = 0;
+
+  window.quizData.questions.forEach((q, qi) => {
+    const checked = [...document.querySelectorAll(`input[name=q${qi}]:checked`)]
+      .map(el => parseInt(el.value));
+
+    if (JSON.stringify(checked.sort()) === JSON.stringify(q.correct.sort())) {
+      score++;
+    }
+  });
+
+  alert("Score : " + score + "/" + window.quizData.questions.length);
+}
+
+loadQuiz();
+</script>
+
+</body>
+</html>
