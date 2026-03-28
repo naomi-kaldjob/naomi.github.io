@@ -11,7 +11,7 @@
 
 <script>
 async function loadQuiz() {
-  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook-test/qcm-service");
+  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
   const data = await res.json();
 
   const quizDiv = document.getElementById("quiz");
