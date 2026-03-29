@@ -7,6 +7,39 @@
     body {
       font-family: Arial;
     }
+    .question-card {
+  background: #f5f7ff;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 15px;
+  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.option {
+  display: block;
+  background: white;
+  padding: 12px;
+  margin: 10px 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.2s;
+  border: 2px solid transparent;
+}
+
+.option:hover {
+  background: #e0e7ff;
+}
+
+input[type="radio"] {
+  display: none;
+}
+
+input[type="radio"]:checked + span {
+  background: #667eea;
+  color: white;
+  border-radius: 8px;
+  padding: 5px 10px;
+}
 
     /* 🔥 MODAL */
     #modal {
@@ -46,7 +79,9 @@
 
 </head>
   <!-- 🔥 WELCOME POPUP -->
+  
 <div id="modal">
+  
   <div id="modalContent">
     <h2>👋 Bienvenue !</h2>
 
@@ -74,29 +109,43 @@
 </div>
 
 <script>
+let quizPromise;
 
+function preloadQuiz() {
+  quizPromise = fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service")
+    .then(res => res.json());
+}
+
+// 🚀 lancé immédiatement
+preloadQuiz();
 async function loadQuiz() {
-  const res = await fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service");
-  const raw = await res.json();
+  const raw = await quizPromise;;
   const data = raw[0];
 
   const quizDiv = document.getElementById("quiz");
 
   data.questions.forEach((q, qi) => {
-    const qDiv = document.createElement("div");
-    qDiv.innerHTML = `<h3>${q.text}</h3>`;
+  const qDiv = document.createElement("div");
+  qDiv.className = "question-card";
 
-    q.options.forEach((opt, oi) => {
-      qDiv.innerHTML += `
-        <label>
-          <input type="radio" name="q${qi}" value="${oi}">
-          ${opt}
-        </label><br>
-      `;
-    });
+  let optionsHTML = "";
 
-    quizDiv.appendChild(qDiv);
+  q.options.forEach((opt, oi) => {
+    optionsHTML += `
+      <label class="option">
+        <input type="radio" name="q${qi}" value="${oi}">
+        <span>${opt}</span>
+      </label>
+    `;
   });
+
+  qDiv.innerHTML = `
+    <h3>${q.text}</h3>
+    ${optionsHTML}
+  `;
+
+  quizDiv.appendChild(qDiv);
+});
 
   window.quizData = data;
 }
