@@ -6,57 +6,11 @@
   <style>
     body {
       font-family: Arial;
+      background: #f6f7fb;
+      text-align: center;
     }
-  #progress {
-  height: 10px;
-  background: #eee;
-  border-radius: 10px;
-  overflow: hidden;
-  margin-bottom: 15px;
-}
 
-#progressBar {
-  height: 100%;
-  width: 0%;
-  background: #667eea;
-  transition: width 0.3s;
-}
-
-#timer {
-  font-size: 18px;
-  margin-bottom: 10px;
-  font-weight: bold;
-}
-
-.question-card {
-  background: #f5f7ff;
-  padding: 20px;
-  border-radius: 15px;
-  box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-}
-
-.option {
-  display: block;
-  padding: 12px;
-  margin: 10px 0;
-  border-radius: 10px;
-  cursor: pointer;
-  border: 2px solid #ddd;
-  transition: 0.2s;
-}
-
-.option.correct {
-  background: #4ade80;
-  color: white;
-  border-color: #16a34a;
-}
-
-.option.wrong {
-  background: #f87171;
-  color: white;
-  border-color: #dc2626;
-}
-    /* 🔥 MODAL */
+    /* MODAL */
     #modal {
       position: fixed;
       top: 0;
@@ -74,7 +28,6 @@
       padding: 30px;
       border-radius: 15px;
       max-width: 500px;
-      text-align: center;
     }
 
     #startBtn {
@@ -84,109 +37,203 @@
       color: white;
       border-radius: 10px;
       cursor: pointer;
-      margin-top: 15px;
     }
 
     #quizContainer {
       display: none;
+      padding: 20px;
+    }
+
+    /* PROGRESS */
+    #progress {
+      height: 10px;
+      background: #ddd;
+      border-radius: 10px;
+      overflow: hidden;
+      margin: 20px auto;
+      max-width: 600px;
+    }
+
+    #progressBar {
+      height: 100%;
+      width: 0%;
+      background: #667eea;
+      transition: width 0.3s;
+    }
+
+    /* TIMER */
+    #timer {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    /* QUESTION CARD */
+    .question-card {
+      background: white;
+      padding: 25px;
+      border-radius: 18px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+      max-width: 600px;
+      margin: auto;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .options {
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .option {
+      padding: 15px;
+      border-radius: 12px;
+      background: #f3f4f6;
+      cursor: pointer;
+      transition: 0.2s;
+      border: 2px solid transparent;
+      font-size: 16px;
+    }
+
+    .option:hover {
+      transform: scale(1.02);
+      background: #e0e7ff;
+    }
+
+    .option.correct {
+      background: #22c55e;
+      color: white;
+    }
+
+    .option.wrong {
+      background: #ef4444;
+      color: white;
+    }
+
+    .option:active {
+      transform: scale(0.98);
     }
   </style>
-
 </head>
-  <!-- 🔥 WELCOME POPUP -->
-  
+
+<body>
+
+<!-- MODAL -->
 <div id="modal">
-  
   <div id="modalContent">
     <h2>👋 Bienvenue !</h2>
-
-    <p>
-      Ce quiz a pour objectif de tester vos connaissances sur le thème du service civique et des institutions.
-    </p>
-
-    <p>
-      👉 Répondez aux questions à choix unique  
-      👉 Cliquez sur “Valider” à la fin  
-      👉 Votre score sera affiché automatiquement
-    </p>
-
-    <button id="startBtn" onclick="startQuiz()">Commencer le quiz</button>
+    <p>Quiz interactif</p>
+    <button id="startBtn" onclick="startQuiz()">Commencer</button>
   </div>
 </div>
-<body>
-<!-- 🔥 QUIZ -->
+
+<!-- QUIZ -->
 <div id="quizContainer">
 
   <h1>Mon Quiz</h1>
+
+  <div id="progress"><div id="progressBar"></div></div>
+  <div id="timer"></div>
+
   <div id="quiz"></div>
-  <button onclick="submitQuiz()">Valider</button>
 
 </div>
 
 <script>
+
 let quizData;
 let currentQuestion = 0;
 let score = 0;
 let timer;
 let timeLeft = 10;
 
-// 🔥 PRELOAD API
+/* PRELOAD API */
 let quizPromise;
 
 function preloadQuiz() {
   quizPromise = fetch("https://n8n-qcm-service-civique.onrender.com/webhook/qcm-service")
-    .then(res => res.json());
+    .then(res => res.json())
+    .then(raw => raw[0]);
 }
 
 preloadQuiz();
 
+/* START */
 function startQuiz() {
   document.getElementById("modal").style.display = "none";
   document.getElementById("quizContainer").style.display = "block";
 
-  loadQuiz();
+  if (!quizData) {
+    document.getElementById("quiz").innerHTML = "Chargement...";
+    quizPromise.then(data => {
+      quizData = data;
+      showQuestion();
+    });
+  } else {
+    showQuestion();
+  }
 }
 
-// 🔥 LOAD DATA
-async function loadQuiz() {
-  const raw = await quizPromise;
-  quizData = raw[0];
-
-  showQuestion();
-}
-
-// 🔥 AFFICHER UNE QUESTION
+/* SHOW QUESTION */
 function showQuestion() {
   const q = quizData.questions[currentQuestion];
-  const quizDiv = document.getElementById("quiz");
 
-  quizDiv.innerHTML = "";
+  const html = `
+    <div class="question-card">
+      <h2>${q.text}</h2>
 
-  const card = document.createElement("div");
-  card.className = "question-card";
+      <div class="options">
+        ${q.options.map((opt, i) => `
+          <div class="option" onclick="selectAnswer(this, ${i}, ${q.correctOptionIndex})">
+            ${opt}
+          </div>
+        `).join("")}
+      </div>
+    </div>
+  `;
 
-  card.innerHTML = `<h3>${q.text}</h3>`;
-
-  q.options.forEach((opt, oi) => {
-    const label = document.createElement("label");
-    label.className = "option";
-
-    label.innerHTML = `
-      <input type="radio" name="option" value="${oi}">
-      ${opt}
-    `;
-
-    label.onclick = () => selectAnswer(label, oi, q.correctOptionIndex);
-    card.appendChild(label);
-  });
-
-  quizDiv.appendChild(card);
+  document.getElementById("quiz").innerHTML = html;
 
   updateProgress();
   startTimer();
 }
 
-// 🔥 TIMER
+/* ANSWER */
+function selectAnswer(el, selected, correct) {
+  clearInterval(timer);
+
+  const options = document.querySelectorAll(".option");
+  options.forEach(o => o.style.pointerEvents = "none");
+
+  if (selected === correct) {
+    el.classList.add("correct");
+    score++;
+  } else {
+    el.classList.add("wrong");
+    options[correct].classList.add("correct");
+  }
+
+  setTimeout(nextQuestion, 1000);
+}
+
+/* NEXT */
+function nextQuestion() {
+  currentQuestion++;
+
+  if (currentQuestion >= quizData.questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+/* TIMER */
 function startTimer() {
   clearInterval(timer);
   timeLeft = 10;
@@ -204,57 +251,23 @@ function startTimer() {
   }, 1000);
 }
 
-// 🔥 RÉPONSE
-function selectAnswer(label, selected, correct) {
-  clearInterval(timer);
-
-  const options = document.querySelectorAll(".option");
-
-  options.forEach(opt => {
-    opt.style.pointerEvents = "none";
-  });
-
-  if (selected === correct) {
-    label.classList.add("correct");
-    score++;
-  } else {
-    label.classList.add("wrong");
-    options[correct].classList.add("correct");
-  }
-
-  setTimeout(nextQuestion, 1200);
-}
-
-// 🔥 QUESTION SUIVANTE
-function nextQuestion() {
-  currentQuestion++;
-
-  if (currentQuestion >= quizData.questions.length) {
-    showResult();
-  } else {
-    showQuestion();
-  }
-}
-
-// 🔥 PROGRESSION
+/* PROGRESS */
 function updateProgress() {
   const percent = (currentQuestion / quizData.questions.length) * 100;
-
-  document.getElementById("progress").innerHTML = `
-    <div id="progressBar" style="width:${percent}%"></div>
-  `;
+  document.getElementById("progressBar").style.width = percent + "%";
 }
 
-// 🔥 RESULTAT
+/* RESULT */
 function showResult() {
   document.getElementById("quiz").innerHTML = `
     <div class="question-card">
-      <h2>Quiz terminé 🎉</h2>
+      <h2>🎉 Terminé</h2>
       <p>Score : ${score} / ${quizData.questions.length}</p>
     </div>
   `;
 
   document.getElementById("timer").innerHTML = "";
+  document.getElementById("progressBar").style.width = "100%";
 }
 
 </script>
