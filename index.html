@@ -7,46 +7,54 @@
     body {
       font-family: Arial;
     }
-    .question-card {
+  #progress {
+  height: 10px;
+  background: #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 15px;
+}
+
+#progressBar {
+  height: 100%;
+  width: 0%;
+  background: #667eea;
+  transition: width 0.3s;
+}
+
+#timer {
+  font-size: 18px;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.question-card {
   background: #f5f7ff;
   padding: 20px;
-  margin: 20px 0;
   border-radius: 15px;
   box-shadow: 0 5px 15px rgba(0,0,0,0.1);
 }
 
 .option {
   display: block;
-  background: white;
   padding: 12px;
   margin: 10px 0;
   border-radius: 10px;
   cursor: pointer;
+  border: 2px solid #ddd;
   transition: 0.2s;
-  border: 2px solid transparent;
 }
 
-.option:hover {
-  background: #e0e7ff;
-}
-
-input[type="radio"] {
-  display: none;
-}
-
-input[type="radio"]:checked + span {
-  background: #667eea;
+.option.correct {
+  background: #4ade80;
   color: white;
-  border-radius: 8px;
-  padding: 5px 10px;
-}
-.question-card {
-  animation: fadeIn 0.4s ease;
+  border-color: #16a34a;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px);}
-  to { opacity: 1; transform: translateY(0);}
+.option.wrong {
+  background: #f87171;
+  color: white;
+  border-color: #dc2626;
 }
     /* 🔥 MODAL */
     #modal {
@@ -116,6 +124,13 @@ input[type="radio"]:checked + span {
 </div>
 
 <script>
+let quizData;
+let currentQuestion = 0;
+let score = 0;
+let timer;
+let timeLeft = 10;
+
+// 🔥 PRELOAD API
 let quizPromise;
 
 function preloadQuiz() {
@@ -123,41 +138,8 @@ function preloadQuiz() {
     .then(res => res.json());
 }
 
-// 🚀 lancé immédiatement
 preloadQuiz();
-async function loadQuiz() {
-  const raw = await quizPromise;;
-  const data = raw[0];
 
-  const quizDiv = document.getElementById("quiz");
-
-  data.questions.forEach((q, qi) => {
-  const qDiv = document.createElement("div");
-  qDiv.className = "question-card";
-
-  let optionsHTML = "";
-
-  q.options.forEach((opt, oi) => {
-    optionsHTML += `
-      <label class="option">
-        <input type="radio" name="q${qi}" value="${oi}">
-        <span>${opt}</span>
-      </label>
-    `;
-  });
-
-  qDiv.innerHTML = `
-    <h3>${q.text}</h3>
-    ${optionsHTML}
-  `;
-
-  quizDiv.appendChild(qDiv);
-});
-
-  window.quizData = data;
-}
-
-/* 🚀 START BUTTON */
 function startQuiz() {
   document.getElementById("modal").style.display = "none";
   document.getElementById("quizContainer").style.display = "block";
@@ -165,18 +147,114 @@ function startQuiz() {
   loadQuiz();
 }
 
-function submitQuiz() {
-  let score = 0;
+// 🔥 LOAD DATA
+async function loadQuiz() {
+  const raw = await quizPromise;
+  quizData = raw[0];
 
-  window.quizData.questions.forEach((q, qi) => {
-    const checked = document.querySelector(`input[name=q${qi}]:checked`);
+  showQuestion();
+}
 
-    if (checked && parseInt(checked.value) === q.correctOptionIndex) {
-      score++;
-    }
+// 🔥 AFFICHER UNE QUESTION
+function showQuestion() {
+  const q = quizData.questions[currentQuestion];
+  const quizDiv = document.getElementById("quiz");
+
+  quizDiv.innerHTML = "";
+
+  const card = document.createElement("div");
+  card.className = "question-card";
+
+  card.innerHTML = `<h3>${q.text}</h3>`;
+
+  q.options.forEach((opt, oi) => {
+    const label = document.createElement("label");
+    label.className = "option";
+
+    label.innerHTML = `
+      <input type="radio" name="option" value="${oi}">
+      ${opt}
+    `;
+
+    label.onclick = () => selectAnswer(label, oi, q.correctOptionIndex);
+    card.appendChild(label);
   });
 
-  alert("Score : " + score + "/" + window.quizData.questions.length);
+  quizDiv.appendChild(card);
+
+  updateProgress();
+  startTimer();
+}
+
+// 🔥 TIMER
+function startTimer() {
+  clearInterval(timer);
+  timeLeft = 10;
+
+  document.getElementById("timer").innerText = `Temps : ${timeLeft}s`;
+
+  timer = setInterval(() => {
+    timeLeft--;
+    document.getElementById("timer").innerText = `Temps : ${timeLeft}s`;
+
+    if (timeLeft <= 0) {
+      clearInterval(timer);
+      nextQuestion();
+    }
+  }, 1000);
+}
+
+// 🔥 RÉPONSE
+function selectAnswer(label, selected, correct) {
+  clearInterval(timer);
+
+  const options = document.querySelectorAll(".option");
+
+  options.forEach(opt => {
+    opt.style.pointerEvents = "none";
+  });
+
+  if (selected === correct) {
+    label.classList.add("correct");
+    score++;
+  } else {
+    label.classList.add("wrong");
+    options[correct].classList.add("correct");
+  }
+
+  setTimeout(nextQuestion, 1200);
+}
+
+// 🔥 QUESTION SUIVANTE
+function nextQuestion() {
+  currentQuestion++;
+
+  if (currentQuestion >= quizData.questions.length) {
+    showResult();
+  } else {
+    showQuestion();
+  }
+}
+
+// 🔥 PROGRESSION
+function updateProgress() {
+  const percent = (currentQuestion / quizData.questions.length) * 100;
+
+  document.getElementById("progress").innerHTML = `
+    <div id="progressBar" style="width:${percent}%"></div>
+  `;
+}
+
+// 🔥 RESULTAT
+function showResult() {
+  document.getElementById("quiz").innerHTML = `
+    <div class="question-card">
+      <h2>Quiz terminé 🎉</h2>
+      <p>Score : ${score} / ${quizData.questions.length}</p>
+    </div>
+  `;
+
+  document.getElementById("timer").innerHTML = "";
 }
 
 </script>
